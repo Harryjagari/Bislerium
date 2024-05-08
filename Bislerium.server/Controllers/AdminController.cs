@@ -50,9 +50,8 @@ namespace Bislerium.server.Controllers
 
             var user = new User
             {
-                UserName = model.Email,
+                UserName = model.FullName,
                 Email = model.Email,
-                FullName = model.FullName,
                 Address = model.Address,
                 PhoneNumber = model.PhoneNumber,
                 DateOfBirth = model.DateOfBirth,
@@ -151,7 +150,7 @@ namespace Bislerium.server.Controllers
                 return NotFound();
 
             // Update user properties
-            user.FullName = profileModel.FullName;
+            user.UserName = profileModel.FullName;
             user.Address = profileModel.Address;
             user.PhoneNumber = profileModel.PhoneNumber;
             user.DateOfBirth = profileModel.DateOfBirth;

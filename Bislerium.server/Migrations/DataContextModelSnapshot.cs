@@ -190,10 +190,6 @@ namespace Bislerium.server.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -281,21 +277,21 @@ namespace Bislerium.server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "313044d6-6d37-48b8-948f-3ad108d76550",
+                            Id = "26b1a10b-aff3-4c8e-bcbf-796d85126046",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "c6ff03c9-9e40-4b1a-bf97-6d6c2e524190",
+                            Id = "240a77f6-1e9c-4fd0-813a-ee2b59dcc7f3",
                             ConcurrencyStamp = "2",
                             Name = "Blogger",
                             NormalizedName = "Blogger"
                         },
                         new
                         {
-                            Id = "12dfe6e9-d526-4de2-82d5-f420f5354bff",
+                            Id = "ca755f37-c31d-4ddd-8fdd-d1dd4929491c",
                             ConcurrencyStamp = "3",
                             Name = "Surfer",
                             NormalizedName = "Surfer"

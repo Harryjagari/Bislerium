@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bislerium.server.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240508030628_updatemodel")]
-    partial class updatemodel
+    [Migration("20240508043616_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -284,21 +284,21 @@ namespace Bislerium.server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "313044d6-6d37-48b8-948f-3ad108d76550",
+                            Id = "cde9ace3-2f26-413a-8ee6-2a07974b16ca",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "c6ff03c9-9e40-4b1a-bf97-6d6c2e524190",
+                            Id = "8c54e0e8-40bd-4850-bc2b-c622f719aea5",
                             ConcurrencyStamp = "2",
                             Name = "Blogger",
                             NormalizedName = "Blogger"
                         },
                         new
                         {
-                            Id = "12dfe6e9-d526-4de2-82d5-f420f5354bff",
+                            Id = "d1b9f0b6-0ee9-4255-81e5-b9a859711b7d",
                             ConcurrencyStamp = "3",
                             Name = "Surfer",
                             NormalizedName = "Surfer"

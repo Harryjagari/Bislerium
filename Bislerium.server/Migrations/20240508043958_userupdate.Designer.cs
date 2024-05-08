@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bislerium.server.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240504133301_initial")]
-    partial class initial
+    [Migration("20240508043958_userupdate")]
+    partial class userupdate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -85,7 +85,6 @@ namespace Bislerium.server.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("LastModifiedDate")
-                        .IsRequired()
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -150,9 +149,8 @@ namespace Bislerium.server.Migrations
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -195,10 +193,6 @@ namespace Bislerium.server.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -226,6 +220,12 @@ namespace Bislerium.server.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("RegistrationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ResetPasswordOTP")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ResetPasswordOTPIssueTime")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("SecurityStamp")
@@ -280,21 +280,21 @@ namespace Bislerium.server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "38e0c452-df5a-43e2-959a-70f96dcaea8b",
+                            Id = "26b1a10b-aff3-4c8e-bcbf-796d85126046",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "0541c29a-b33b-4274-aef3-bd972a67ed2e",
+                            Id = "240a77f6-1e9c-4fd0-813a-ee2b59dcc7f3",
                             ConcurrencyStamp = "2",
                             Name = "Blogger",
                             NormalizedName = "Blogger"
                         },
                         new
                         {
-                            Id = "40f16ce0-2032-4fa7-8cf7-3d16f502b223",
+                            Id = "ca755f37-c31d-4ddd-8fdd-d1dd4929491c",
                             ConcurrencyStamp = "3",
                             Name = "Surfer",
                             NormalizedName = "Surfer"

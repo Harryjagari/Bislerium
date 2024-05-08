@@ -44,7 +44,7 @@ namespace Bislerium.server.Controllers
                 return NotFound();
 
             // Update user properties
-            user.FullName = profileModel.FullName;
+            user.UserName = profileModel.FullName;
             user.Address = profileModel.Address;
             user.PhoneNumber = profileModel.PhoneNumber;
             user.DateOfBirth = profileModel.DateOfBirth;

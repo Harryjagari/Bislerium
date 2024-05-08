@@ -104,7 +104,7 @@ namespace Bislerium.server.Controllers
                     .Select(u => new
                     {
                         u.Id,
-                        u.FullName,
+                        u.UserName,
                         TotalBlogPosts = u.BlogPosts.Count,
                         TotalComments = u.Comments.Count
                     })

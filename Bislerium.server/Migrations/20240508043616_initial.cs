@@ -37,6 +37,8 @@ namespace Bislerium.server.Migrations
                     DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ProfilePictureUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     RegistrationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ResetPasswordOTP = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ResetPasswordOTPIssueTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -197,7 +199,7 @@ namespace Bislerium.server.Migrations
                     AuthorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     BlogPostId = table.Column<int>(type: "int", nullable: false),
                     CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    LastModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -257,7 +259,7 @@ namespace Bislerium.server.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     BlogPostId = table.Column<int>(type: "int", nullable: false),
                     CommentId = table.Column<int>(type: "int", nullable: false),
@@ -291,9 +293,9 @@ namespace Bislerium.server.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "0541c29a-b33b-4274-aef3-bd972a67ed2e", "2", "Blogger", "Blogger" },
-                    { "38e0c452-df5a-43e2-959a-70f96dcaea8b", "1", "Admin", "Admin" },
-                    { "40f16ce0-2032-4fa7-8cf7-3d16f502b223", "3", "Surfer", "Surfer" }
+                    { "8c54e0e8-40bd-4850-bc2b-c622f719aea5", "2", "Blogger", "Blogger" },
+                    { "cde9ace3-2f26-413a-8ee6-2a07974b16ca", "1", "Admin", "Admin" },
+                    { "d1b9f0b6-0ee9-4255-81e5-b9a859711b7d", "3", "Surfer", "Surfer" }
                 });
 
             migrationBuilder.CreateIndex(

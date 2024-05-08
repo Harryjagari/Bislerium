@@ -82,7 +82,7 @@ namespace Bislerium.server.Controllers
 
             if (postAuthor != null)
             {
-                var notificationMessage = $"{postAuthor.FullName} has commented on your post '{post.Title}' at {DateTime.Now}.";
+                var notificationMessage = $"{postAuthor.UserName} has commented on your post '{post.Title}' at {DateTime.Now}.";
                 await _commentHubContext.Clients.User(post.AuthorId).ReceiveCommentNotification(postId, notificationMessage);
             }
 
@@ -114,7 +114,7 @@ namespace Bislerium.server.Controllers
 
             if (postAuthor != null)
             {
-                var notificationMessage = $"{postAuthor.FullName} has updated their comment on your post '{comment.BlogPost.Title}' at {DateTime.Now}.";
+                var notificationMessage = $"{postAuthor.UserName} has updated their comment on your post '{comment.BlogPost.Title}' at {DateTime.Now}.";
                 await _commentHubContext.Clients.User(comment.BlogPost.AuthorId).ReceiveCommentNotification(postId, notificationMessage);
             }
 
@@ -146,7 +146,7 @@ namespace Bislerium.server.Controllers
 
             if (postAuthor != null)
             {
-                var notificationMessage = $"{postAuthor.FullName} has deleted their comment on your post '{comment.BlogPost.Title}' at {DateTime.Now}.";
+                var notificationMessage = $"{postAuthor.UserName} has deleted their comment on your post '{comment.BlogPost.Title}' at {DateTime.Now}.";
                 await _commentHubContext.Clients.User(comment.BlogPost.AuthorId).ReceiveCommentNotification(postId, notificationMessage);
             }
 
