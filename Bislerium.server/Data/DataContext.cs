@@ -1,16 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Bislerium.server.Data.Entities;
-using System.Collections.Generic;
-using System.Reflection.Emit;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 
 namespace Bislerium.server.Data
 {
-
-    public class DataContext(DbContextOptions<DataContext> options) : IdentityDbContext<User>(options)
+    public class DataContext : IdentityDbContext<User>
     {
-        public DbSet<User> Users { get; set; }
+        public DataContext(DbContextOptions<DataContext> options) : base(options)
+        {
+        }
+
         public DbSet<BlogPost> BlogPosts { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
@@ -20,23 +20,96 @@ namespace Bislerium.server.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<BlogPost>()
+                .HasMany(bp => bp.Comments)
+                .WithOne(c => c.BlogPost)
+                .HasForeignKey(c => c.BlogPostId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<BlogPost>()
-                .HasOne(b => b.Author)
-                .WithMany(u => u.BlogPosts)
-                .HasForeignKey(b => b.AuthorId)
+                .HasMany(bp => bp.Reactions)
+                .WithOne(r => r.BlogPost)
+                .HasForeignKey(r => r.BlogPostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // 2. If comment, Notification, Reaction of particular BlogPost is deleted then the BlogPost must not be deleted
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.BlogPost)
+                .WithMany(bp => bp.Comments)
+                .HasForeignKey(c => c.BlogPostId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.BlogPost)
+                .WithMany(bp => bp.Notifications)
+                .HasForeignKey(n => n.BlogPostId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reaction>()
+                .HasOne(r => r.BlogPost)
+                .WithMany(bp => bp.Reactions)
+                .HasForeignKey(r => r.BlogPostId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 3. If user is deleted then all related BlogPost, Comments, notification, reaction must be deleted.
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.BlogPosts)
+                .WithOne(bp => bp.Author)
+                .HasForeignKey(bp => bp.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Comments)
+                .WithOne(c => c.Author)
+                .HasForeignKey(c => c.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Reactions)
+                .WithOne(r => r.User)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Notifications)
+                .WithOne(n => n.User)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // 4. If comment, Notification, Reaction, BlogPost of particular User is deleted then the User must not be deleted
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Author)
+                .WithMany(u => u.Comments)
+                .HasForeignKey(c => c.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reaction>()
+                .HasOne(r => r.User)
+                .WithMany(u => u.Reactions)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<BlogPost>()
+                .HasOne(bp => bp.Author)
+                .WithMany(u => u.BlogPosts)
+                .HasForeignKey(bp => bp.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
             modelBuilder.Entity<IdentityRole>().HasData
-                (
+            (
                 new IdentityRole() { Name = "Admin", ConcurrencyStamp = "1", NormalizedName = "Admin" },
                 new IdentityRole() { Name = "Blogger", ConcurrencyStamp = "2", NormalizedName = "Blogger" },
-                 new IdentityRole() { Name = "Surfer", ConcurrencyStamp = "3", NormalizedName = "Surfer" }
-
-                );
-
-
+                new IdentityRole() { Name = "Surfer", ConcurrencyStamp = "3", NormalizedName = "Surfer" }
+            );
         }
-    }
 
+
+    }
 }

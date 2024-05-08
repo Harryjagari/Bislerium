@@ -1,9 +1,10 @@
 ﻿using Bislerium.server.Data;
 using Bislerium.server.Data.Entities;
+using Bislerium.shared.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Bislerium.server.Controllers
 {
@@ -18,15 +19,48 @@ namespace Bislerium.server.Controllers
             _context = context;
         }
 
-        // GET: api/BlogPosts
         [HttpGet]
-        public IActionResult GetBlogPosts()
+        public async Task<ActionResult<IEnumerable<BlogPost>>> GetBlogPosts()
         {
-            var blogPosts = _context.BlogPosts.ToList();
+            var blogPosts = await _context.BlogPosts.Select(bp => new BlogPost
+            {
+                Id = bp.Id,
+                Title = bp.Title,
+                Body = bp.Body,
+                ImageUrl = GetImagePath(bp.ImageUrl)
+            }).ToListAsync();
+
             return Ok(blogPosts);
         }
 
-        // GET: api/BlogPosts/5
+        private static string GetImagePath(string imagePath)
+        {
+            if (string.IsNullOrEmpty(imagePath))
+            {
+                return null;
+            }
+
+            string imageName = Path.GetFileName(imagePath);
+            return imageName;
+        }
+
+        [HttpGet("image/{imageName}")]
+        public IActionResult GetBlogPostImage(string imageName)
+        {
+            var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Images", imageName);
+
+            if (System.IO.File.Exists(imagePath))
+            {
+                var imageFileStream = System.IO.File.OpenRead(imagePath);
+                return File(imageFileStream, "image/jpeg");
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+
         [HttpGet("{id}")]
         public IActionResult GetBlogPost(int id)
         {
@@ -40,55 +74,119 @@ namespace Bislerium.server.Controllers
             return Ok(blogPost);
         }
 
-        // POST: api/BlogPosts
+
         [HttpPost]
-        [Authorize(Roles = "Admin, Blogger")]
-        public IActionResult PostBlogPost(BlogPost blogPost)
+        [Authorize(Roles = "Blogger")]
+        public async Task<IActionResult> PostBlogPost([FromForm] BlogPostCreateModel blogPostCreateModel)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            blogPost.CreationDate = DateTime.Now;
+            string uniqueFileName = null;
+
+            if (blogPostCreateModel.Image != null)
+            {
+                // Limit file size to 10 MB
+                if (blogPostCreateModel.Image.Length > 3 * 1024 * 1024)
+                    return BadRequest("Image size exceeds the limit");
+
+                // Generate unique file name
+                uniqueFileName = $"{Guid.NewGuid()}_{blogPostCreateModel.Image.FileName}";
+
+                string uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Images");
+
+                if (!Directory.Exists(uploadDir))
+                {
+                    Directory.CreateDirectory(uploadDir);
+                }
+
+                string filePath = Path.Combine(uploadDir, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await blogPostCreateModel.Image.CopyToAsync(stream);
+                }
+            }
+
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var blogPost = new BlogPost
+            {
+                Title = blogPostCreateModel.Title,
+                Body = blogPostCreateModel.Body,
+                ImageUrl = uniqueFileName,
+                AuthorId = userId,
+                CreationDate = DateTime.Now
+            };
+
             _context.BlogPosts.Add(blogPost);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetBlogPost), new { id = blogPost.Id }, blogPost);
         }
 
-        // PUT: api/BlogPosts/5
+
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin, Blogger")]
-        public IActionResult PutBlogPost(int id, BlogPost blogPost)
+        [Authorize(Roles = "Blogger")]
+        public async Task<IActionResult> PutBlogPost(int id, [FromForm] BlogPostUpdateModel blogPostUpdateModel)
         {
-            if (id != blogPost.Id)
+            if (id != blogPostUpdateModel.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(blogPost).State = EntityState.Modified;
+            var blogPost = _context.BlogPosts.Find(id);
+            if (blogPost == null)
+            {
+                return NotFound();
+            }
 
-            try
+            if (blogPostUpdateModel.Image != null)
             {
-                _context.SaveChanges();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BlogPostExists(id))
+                // Limit file size to 3 MB
+                const int maxFileSizeInBytes = 3 * 1024 * 1024; 
+
+                if (blogPostUpdateModel.Image.Length > maxFileSizeInBytes)
                 {
-                    return NotFound();
+                    ModelState.AddModelError("Image", "The image file size cannot exceed 3 megabytes (MB).");
+                    return BadRequest(ModelState);
                 }
-                else
+
+                string uniqueFileName = $"{Guid.NewGuid()}_{blogPostUpdateModel.Image.FileName}";
+
+                string relativeFilePath = Path.Combine("images", uniqueFileName);
+
+                string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativeFilePath);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    throw;
+                    await blogPostUpdateModel.Image.CopyToAsync(stream);
                 }
+
+                if (!string.IsNullOrEmpty(blogPost.ImageUrl))
+                {
+                    string oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", blogPost.ImageUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
+
+                blogPost.ImageUrl = relativeFilePath;
             }
+
+            blogPost.Title = blogPostUpdateModel.Title;
+            blogPost.Body = blogPostUpdateModel.Body;
+
+            _context.Entry(blogPost).State = EntityState.Modified;
+            _context.SaveChanges();
 
             return NoContent();
         }
 
-        // DELETE: api/BlogPosts/5
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin, Blogger")]
         public IActionResult DeleteBlogPost(int id)
@@ -97,6 +195,15 @@ namespace Bislerium.server.Controllers
             if (blogPost == null)
             {
                 return NotFound();
+            }
+
+            if (!string.IsNullOrEmpty(blogPost.ImageUrl))
+            {
+                string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", blogPost.ImageUrl.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
             }
 
             _context.BlogPosts.Remove(blogPost);
@@ -111,8 +218,3 @@ namespace Bislerium.server.Controllers
         }
     }
 }
-
-
-
-
-

@@ -81,7 +81,7 @@ namespace Bislerium.server.Migrations
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("LastModifiedDate")
+                    b.Property<DateTime?>("LastModifiedDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -101,10 +101,10 @@ namespace Bislerium.server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("BlogPostId")
+                    b.Property<int>("BlogPostId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CommentId")
+                    b.Property<int>("CommentId")
                         .HasColumnType("int");
 
                     b.Property<string>("Content")
@@ -137,18 +137,17 @@ namespace Bislerium.server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("BlogPostId")
+                    b.Property<int>("BlogPostId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CommentId")
+                    b.Property<int>("CommentId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -224,6 +223,12 @@ namespace Bislerium.server.Migrations
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ResetPasswordOTP")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ResetPasswordOTPIssueTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -276,21 +281,21 @@ namespace Bislerium.server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "115052e0-bd69-46cf-9850-35b6659673a3",
+                            Id = "313044d6-6d37-48b8-948f-3ad108d76550",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "5015c0ac-318c-40f9-bd5e-57119b085239",
+                            Id = "c6ff03c9-9e40-4b1a-bf97-6d6c2e524190",
                             ConcurrencyStamp = "2",
                             Name = "Blogger",
                             NormalizedName = "Blogger"
                         },
                         new
                         {
-                            Id = "b06efed2-d263-46da-856b-20cc5d21c17b",
+                            Id = "12dfe6e9-d526-4de2-82d5-f420f5354bff",
                             ConcurrencyStamp = "3",
                             Name = "Surfer",
                             NormalizedName = "Surfer"
@@ -419,13 +424,13 @@ namespace Bislerium.server.Migrations
                     b.HasOne("Bislerium.server.Data.Entities.User", "Author")
                         .WithMany("Comments")
                         .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Bislerium.server.Data.Entities.BlogPost", "BlogPost")
                         .WithMany("Comments")
                         .HasForeignKey("BlogPostId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Author");
@@ -437,16 +442,20 @@ namespace Bislerium.server.Migrations
                 {
                     b.HasOne("Bislerium.server.Data.Entities.BlogPost", "BlogPost")
                         .WithMany("Notifications")
-                        .HasForeignKey("BlogPostId");
+                        .HasForeignKey("BlogPostId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Bislerium.server.Data.Entities.Comment", "Comment")
                         .WithMany("Notifications")
-                        .HasForeignKey("CommentId");
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Bislerium.server.Data.Entities.User", "User")
                         .WithMany("Notifications")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("BlogPost");
@@ -460,16 +469,20 @@ namespace Bislerium.server.Migrations
                 {
                     b.HasOne("Bislerium.server.Data.Entities.BlogPost", "BlogPost")
                         .WithMany("Reactions")
-                        .HasForeignKey("BlogPostId");
+                        .HasForeignKey("BlogPostId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Bislerium.server.Data.Entities.Comment", "Comment")
                         .WithMany("Reactions")
-                        .HasForeignKey("CommentId");
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Bislerium.server.Data.Entities.User", "User")
                         .WithMany("Reactions")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("BlogPost");

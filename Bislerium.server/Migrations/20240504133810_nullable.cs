@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -7,7 +8,7 @@
 namespace Bislerium.server.Migrations
 {
     /// <inheritdoc />
-    public partial class UserUpdated : Migration
+    public partial class nullable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,34 +16,34 @@ namespace Bislerium.server.Migrations
             migrationBuilder.DeleteData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
-                keyValue: "1f1b8e90-aa46-4abb-9a7a-fc5014325722");
+                keyValue: "0541c29a-b33b-4274-aef3-bd972a67ed2e");
 
             migrationBuilder.DeleteData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
-                keyValue: "c6bb87f5-530d-40ef-835f-e6efefff53d2");
+                keyValue: "38e0c452-df5a-43e2-959a-70f96dcaea8b");
 
             migrationBuilder.DeleteData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
-                keyValue: "f929dc26-6759-4538-a51d-c820188da604");
+                keyValue: "40f16ce0-2032-4fa7-8cf7-3d16f502b223");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ProfilePictureUrl",
-                table: "AspNetUsers",
-                type: "nvarchar(max)",
+            migrationBuilder.AlterColumn<DateTime>(
+                name: "LastModifiedDate",
+                table: "Comments",
+                type: "datetime2",
                 nullable: true,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)");
+                oldClrType: typeof(DateTime),
+                oldType: "datetime2");
 
             migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "39267dd9-3753-44a4-a482-a68ced637c4a", "3", "Surfer", "Surfer" },
-                    { "5ab7dc93-ee19-48eb-80ef-a00f01e98846", "2", "User", "User" },
-                    { "ceacd902-e40e-4bfc-96c9-bd7fe34ffa41", "1", "Admin", "Admin" }
+                    { "0b38fc5e-3fc4-4591-8e03-a4e14f39ff29", "1", "Admin", "Admin" },
+                    { "3812ddc4-54d3-4f06-b8f7-7c7e15995a90", "2", "Blogger", "Blogger" },
+                    { "886ce13f-b7f5-4011-b72b-b49b2ef2bed6", "3", "Surfer", "Surfer" }
                 });
         }
 
@@ -52,26 +53,26 @@ namespace Bislerium.server.Migrations
             migrationBuilder.DeleteData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
-                keyValue: "39267dd9-3753-44a4-a482-a68ced637c4a");
+                keyValue: "0b38fc5e-3fc4-4591-8e03-a4e14f39ff29");
 
             migrationBuilder.DeleteData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
-                keyValue: "5ab7dc93-ee19-48eb-80ef-a00f01e98846");
+                keyValue: "3812ddc4-54d3-4f06-b8f7-7c7e15995a90");
 
             migrationBuilder.DeleteData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
-                keyValue: "ceacd902-e40e-4bfc-96c9-bd7fe34ffa41");
+                keyValue: "886ce13f-b7f5-4011-b72b-b49b2ef2bed6");
 
-            migrationBuilder.AlterColumn<string>(
-                name: "ProfilePictureUrl",
-                table: "AspNetUsers",
-                type: "nvarchar(max)",
+            migrationBuilder.AlterColumn<DateTime>(
+                name: "LastModifiedDate",
+                table: "Comments",
+                type: "datetime2",
                 nullable: false,
-                defaultValue: "",
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)",
+                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                oldClrType: typeof(DateTime),
+                oldType: "datetime2",
                 oldNullable: true);
 
             migrationBuilder.InsertData(
@@ -79,9 +80,9 @@ namespace Bislerium.server.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "1f1b8e90-aa46-4abb-9a7a-fc5014325722", "2", "User", "User" },
-                    { "c6bb87f5-530d-40ef-835f-e6efefff53d2", "3", "Surfer", "Surfer" },
-                    { "f929dc26-6759-4538-a51d-c820188da604", "1", "Admin", "Admin" }
+                    { "0541c29a-b33b-4274-aef3-bd972a67ed2e", "2", "Blogger", "Blogger" },
+                    { "38e0c452-df5a-43e2-959a-70f96dcaea8b", "1", "Admin", "Admin" },
+                    { "40f16ce0-2032-4fa7-8cf7-3d16f502b223", "3", "Surfer", "Surfer" }
                 });
         }
     }
