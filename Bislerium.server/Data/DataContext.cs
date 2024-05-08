@@ -14,7 +14,9 @@ namespace Bislerium.server.Data
         public DbSet<BlogPost> BlogPosts { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<CommentUpdateHistory> CommentUpdateHistories { get; set; }
+        public DbSet<BlogPostUpdateHistory> BlogPostUpdateHistories { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,12 +39,6 @@ namespace Bislerium.server.Data
                 .HasOne(c => c.BlogPost)
                 .WithMany(bp => bp.Comments)
                 .HasForeignKey(c => c.BlogPostId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Notification>()
-                .HasOne(n => n.BlogPost)
-                .WithMany(bp => bp.Notifications)
-                .HasForeignKey(n => n.BlogPostId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Reaction>()
@@ -70,23 +66,11 @@ namespace Bislerium.server.Data
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Notifications)
-                .WithOne(n => n.User)
-                .HasForeignKey(n => n.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             // 4. If comment, Notification, Reaction, BlogPost of particular User is deleted then the User must not be deleted
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.Author)
                 .WithMany(u => u.Comments)
                 .HasForeignKey(c => c.AuthorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Notification>()
-                .HasOne(n => n.User)
-                .WithMany(u => u.Notifications)
-                .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Reaction>()
@@ -105,8 +89,7 @@ namespace Bislerium.server.Data
             modelBuilder.Entity<IdentityRole>().HasData
             (
                 new IdentityRole() { Name = "Admin", ConcurrencyStamp = "1", NormalizedName = "Admin" },
-                new IdentityRole() { Name = "Blogger", ConcurrencyStamp = "2", NormalizedName = "Blogger" },
-                new IdentityRole() { Name = "Surfer", ConcurrencyStamp = "3", NormalizedName = "Surfer" }
+                new IdentityRole() { Name = "Blogger", ConcurrencyStamp = "2", NormalizedName = "Blogger" }
             );
         }
 

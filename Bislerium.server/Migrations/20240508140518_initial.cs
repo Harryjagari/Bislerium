@@ -37,6 +37,8 @@ namespace Bislerium.server.Migrations
                     DateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ProfilePictureUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     RegistrationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ResetPasswordOTP = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ResetPasswordOTPIssueTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -167,8 +169,7 @@ namespace Bislerium.server.Migrations
                 name: "BlogPosts",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Body = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -188,16 +189,40 @@ namespace Bislerium.server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "BlogPostUpdateHistories",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BlogPostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OriginalTitle = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedTitle = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    OriginalBody = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedBody = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    OriginalImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BlogPostUpdateHistories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BlogPostUpdateHistories_BlogPosts_BlogPostId",
+                        column: x => x.BlogPostId,
+                        principalTable: "BlogPosts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Comments",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AuthorId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    BlogPostId = table.Column<int>(type: "int", nullable: false),
+                    BlogPostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    LastModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -217,34 +242,20 @@ namespace Bislerium.server.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Notifications",
+                name: "CommentUpdateHistories",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    BlogPostId = table.Column<int>(type: "int", nullable: false),
-                    CommentId = table.Column<int>(type: "int", nullable: false),
-                    CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CommentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OriginalContent = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UpdatedContent = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.PrimaryKey("PK_CommentUpdateHistories", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Notifications_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Notifications_BlogPosts_BlogPostId",
-                        column: x => x.BlogPostId,
-                        principalTable: "BlogPosts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Notifications_Comments_CommentId",
+                        name: "FK_CommentUpdateHistories_Comments_CommentId",
                         column: x => x.CommentId,
                         principalTable: "Comments",
                         principalColumn: "Id",
@@ -255,12 +266,11 @@ namespace Bislerium.server.Migrations
                 name: "Reactions",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    BlogPostId = table.Column<int>(type: "int", nullable: false),
-                    CommentId = table.Column<int>(type: "int", nullable: false),
+                    BlogPostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CommentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -282,8 +292,7 @@ namespace Bislerium.server.Migrations
                         name: "FK_Reactions_Comments_CommentId",
                         column: x => x.CommentId,
                         principalTable: "Comments",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.InsertData(
@@ -291,9 +300,8 @@ namespace Bislerium.server.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "0541c29a-b33b-4274-aef3-bd972a67ed2e", "2", "Blogger", "Blogger" },
-                    { "38e0c452-df5a-43e2-959a-70f96dcaea8b", "1", "Admin", "Admin" },
-                    { "40f16ce0-2032-4fa7-8cf7-3d16f502b223", "3", "Surfer", "Surfer" }
+                    { "5a2652fe-a589-42ca-92ea-d2ec7070fef2", "2", "Blogger", "Blogger" },
+                    { "a84304e9-c961-4ae6-8750-47c98beb4929", "1", "Admin", "Admin" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -341,6 +349,11 @@ namespace Bislerium.server.Migrations
                 column: "AuthorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BlogPostUpdateHistories_BlogPostId",
+                table: "BlogPostUpdateHistories",
+                column: "BlogPostId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Comments_AuthorId",
                 table: "Comments",
                 column: "AuthorId");
@@ -351,19 +364,9 @@ namespace Bislerium.server.Migrations
                 column: "BlogPostId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Notifications_BlogPostId",
-                table: "Notifications",
-                column: "BlogPostId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Notifications_CommentId",
-                table: "Notifications",
+                name: "IX_CommentUpdateHistories_CommentId",
+                table: "CommentUpdateHistories",
                 column: "CommentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Notifications_UserId",
-                table: "Notifications",
-                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Reactions_BlogPostId",
@@ -400,7 +403,10 @@ namespace Bislerium.server.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Notifications");
+                name: "BlogPostUpdateHistories");
+
+            migrationBuilder.DropTable(
+                name: "CommentUpdateHistories");
 
             migrationBuilder.DropTable(
                 name: "Reactions");

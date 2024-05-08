@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bislerium.server.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20240504133301_initial")]
+    [Migration("20240508140518_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -27,11 +27,9 @@ namespace Bislerium.server.Migrations
 
             modelBuilder.Entity("Bislerium.server.Data.Entities.BlogPost", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AuthorId")
                         .IsRequired()
@@ -62,20 +60,61 @@ namespace Bislerium.server.Migrations
                     b.ToTable("BlogPosts");
                 });
 
+            modelBuilder.Entity("Bislerium.server.Data.Entities.BlogPostUpdateHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BlogPostId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("OriginalBody")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OriginalImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OriginalTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBody")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UpdatedImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UpdatedTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlogPostId");
+
+                    b.ToTable("BlogPostUpdateHistories");
+                });
+
             modelBuilder.Entity("Bislerium.server.Data.Entities.Comment", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("AuthorId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("BlogPostId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("BlogPostId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -85,7 +124,6 @@ namespace Bislerium.server.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("LastModifiedDate")
-                        .IsRequired()
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -97,62 +135,50 @@ namespace Bislerium.server.Migrations
                     b.ToTable("Comments");
                 });
 
-            modelBuilder.Entity("Bislerium.server.Data.Entities.Notification", b =>
+            modelBuilder.Entity("Bislerium.server.Data.Entities.CommentUpdateHistory", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("CommentId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("BlogPostId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CommentId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Content")
+                    b.Property<string>("OriginalContent")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreationDate")
+                    b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
+                    b.Property<string>("UpdatedContent")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BlogPostId");
-
                     b.HasIndex("CommentId");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Notifications");
+                    b.ToTable("CommentUpdateHistories");
                 });
 
             modelBuilder.Entity("Bislerium.server.Data.Entities.Reaction", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("BlogPostId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("BlogPostId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CommentId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("CommentId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -228,6 +254,12 @@ namespace Bislerium.server.Migrations
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ResetPasswordOTP")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ResetPasswordOTPIssueTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -280,24 +312,17 @@ namespace Bislerium.server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "38e0c452-df5a-43e2-959a-70f96dcaea8b",
+                            Id = "a84304e9-c961-4ae6-8750-47c98beb4929",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "0541c29a-b33b-4274-aef3-bd972a67ed2e",
+                            Id = "5a2652fe-a589-42ca-92ea-d2ec7070fef2",
                             ConcurrencyStamp = "2",
                             Name = "Blogger",
                             NormalizedName = "Blogger"
-                        },
-                        new
-                        {
-                            Id = "40f16ce0-2032-4fa7-8cf7-3d16f502b223",
-                            ConcurrencyStamp = "3",
-                            Name = "Surfer",
-                            NormalizedName = "Surfer"
                         });
                 });
 
@@ -418,6 +443,15 @@ namespace Bislerium.server.Migrations
                     b.Navigation("Author");
                 });
 
+            modelBuilder.Entity("Bislerium.server.Data.Entities.BlogPostUpdateHistory", b =>
+                {
+                    b.HasOne("Bislerium.server.Data.Entities.BlogPost", null)
+                        .WithMany("UpdateHistories")
+                        .HasForeignKey("BlogPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Bislerium.server.Data.Entities.Comment", b =>
                 {
                     b.HasOne("Bislerium.server.Data.Entities.User", "Author")
@@ -437,31 +471,13 @@ namespace Bislerium.server.Migrations
                     b.Navigation("BlogPost");
                 });
 
-            modelBuilder.Entity("Bislerium.server.Data.Entities.Notification", b =>
+            modelBuilder.Entity("Bislerium.server.Data.Entities.CommentUpdateHistory", b =>
                 {
-                    b.HasOne("Bislerium.server.Data.Entities.BlogPost", "BlogPost")
-                        .WithMany("Notifications")
-                        .HasForeignKey("BlogPostId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Bislerium.server.Data.Entities.Comment", "Comment")
-                        .WithMany("Notifications")
+                    b.HasOne("Bislerium.server.Data.Entities.Comment", null)
+                        .WithMany("UpdateHistories")
                         .HasForeignKey("CommentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Bislerium.server.Data.Entities.User", "User")
-                        .WithMany("Notifications")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("BlogPost");
-
-                    b.Navigation("Comment");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Bislerium.server.Data.Entities.Reaction", b =>
@@ -474,9 +490,7 @@ namespace Bislerium.server.Migrations
 
                     b.HasOne("Bislerium.server.Data.Entities.Comment", "Comment")
                         .WithMany("Reactions")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CommentId");
 
                     b.HasOne("Bislerium.server.Data.Entities.User", "User")
                         .WithMany("Reactions")
@@ -546,16 +560,16 @@ namespace Bislerium.server.Migrations
                 {
                     b.Navigation("Comments");
 
-                    b.Navigation("Notifications");
-
                     b.Navigation("Reactions");
+
+                    b.Navigation("UpdateHistories");
                 });
 
             modelBuilder.Entity("Bislerium.server.Data.Entities.Comment", b =>
                 {
-                    b.Navigation("Notifications");
-
                     b.Navigation("Reactions");
+
+                    b.Navigation("UpdateHistories");
                 });
 
             modelBuilder.Entity("Bislerium.server.Data.Entities.User", b =>
@@ -563,8 +577,6 @@ namespace Bislerium.server.Migrations
                     b.Navigation("BlogPosts");
 
                     b.Navigation("Comments");
-
-                    b.Navigation("Notifications");
 
                     b.Navigation("Reactions");
                 });

@@ -2,6 +2,6 @@
 {
     public interface IReactionHubClient
     {
-        Task ReceiveReactionNotification(int postId, string message);
+        Task ReceiveReactionNotification(Guid postId, string message);
     }
 }

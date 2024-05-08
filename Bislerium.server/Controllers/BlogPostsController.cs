@@ -27,6 +27,7 @@ namespace Bislerium.server.Controllers
                 Id = bp.Id,
                 Title = bp.Title,
                 Body = bp.Body,
+                AuthorId = bp.AuthorId,
                 ImageUrl = GetImagePath(bp.ImageUrl)
             }).ToListAsync();
 
@@ -62,7 +63,7 @@ namespace Bislerium.server.Controllers
 
 
         [HttpGet("{id}")]
-        public IActionResult GetBlogPost(int id)
+        public IActionResult GetBlogPost(Guid id)
         {
             var blogPost = _context.BlogPosts.Find(id);
 
@@ -189,7 +190,7 @@ namespace Bislerium.server.Controllers
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin, Blogger")]
-        public IActionResult DeleteBlogPost(int id)
+        public IActionResult DeleteBlogPost(Guid id)
         {
             var blogPost = _context.BlogPosts.Find(id);
             if (blogPost == null)
@@ -212,7 +213,7 @@ namespace Bislerium.server.Controllers
             return NoContent();
         }
 
-        private bool BlogPostExists(int id)
+        private bool BlogPostExists(Guid id)
         {
             return _context.BlogPosts.Any(e => e.Id == id);
         }

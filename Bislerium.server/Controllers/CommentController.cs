@@ -14,7 +14,6 @@ namespace Bislerium.server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Blogger")]
     public class CommentController : ControllerBase
     {
         private readonly DataContext _context;
@@ -30,7 +29,8 @@ namespace Bislerium.server.Controllers
 
 
         [HttpGet("{postId}/comments")]
-        public async Task<ActionResult<IEnumerable<Comment>>> GetCommentsForPost(int postId)
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<Comment>>> GetCommentsForPost(Guid postId)
         {
             var post = await _context.BlogPosts
                 .Include(p => p.Comments)
@@ -52,7 +52,8 @@ namespace Bislerium.server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddComment(int postId, string comment)
+        [Authorize(Roles = "Blogger")]
+        public async Task<IActionResult> AddComment(Guid postId, string comment)
         {
             var post = await _context.BlogPosts.FindAsync(postId);
             if (post == null)
@@ -82,7 +83,7 @@ namespace Bislerium.server.Controllers
 
             if (postAuthor != null)
             {
-                var notificationMessage = $"{postAuthor.FullName} has commented on your post '{post.Title}' at {DateTime.Now}.";
+                var notificationMessage = $"{postAuthor.UserName} has commented on your post '{post.Title}' at {DateTime.Now}.";
                 await _commentHubContext.Clients.User(post.AuthorId).ReceiveCommentNotification(postId, notificationMessage);
             }
 
@@ -90,7 +91,8 @@ namespace Bislerium.server.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateComment(int id, string updatedComment)
+        [Authorize]
+        public async Task<IActionResult> UpdateComment(Guid id, string updatedComment)
         {
             var comment = await _context.Comments.FindAsync(id);
 
@@ -106,6 +108,7 @@ namespace Bislerium.server.Controllers
             }
 
             var postId = comment.BlogPostId;
+            var post = await _context.BlogPosts.FindAsync(postId);
 
             comment.Content = updatedComment;
             await _context.SaveChangesAsync();
@@ -114,7 +117,7 @@ namespace Bislerium.server.Controllers
 
             if (postAuthor != null)
             {
-                var notificationMessage = $"{postAuthor.FullName} has updated their comment on your post '{comment.BlogPost.Title}' at {DateTime.Now}.";
+                var notificationMessage = $"{postAuthor.UserName} has updated their comment on your post at {DateTime.Now}.";
                 await _commentHubContext.Clients.User(comment.BlogPost.AuthorId).ReceiveCommentNotification(postId, notificationMessage);
             }
 
@@ -122,7 +125,8 @@ namespace Bislerium.server.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteComment(int id)
+        [Authorize]
+        public async Task<IActionResult> DeleteComment(Guid id)
         {
             var comment = await _context.Comments.FindAsync(id);
 
@@ -138,6 +142,7 @@ namespace Bislerium.server.Controllers
             }
 
             var postId = comment.BlogPostId;
+            var post = await _context.BlogPosts.FindAsync(postId);
 
             _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();
@@ -146,7 +151,7 @@ namespace Bislerium.server.Controllers
 
             if (postAuthor != null)
             {
-                var notificationMessage = $"{postAuthor.FullName} has deleted their comment on your post '{comment.BlogPost.Title}' at {DateTime.Now}.";
+                var notificationMessage = $"{postAuthor.UserName} has deleted their comment on your post at {DateTime.Now}.";
                 await _commentHubContext.Clients.User(comment.BlogPost.AuthorId).ReceiveCommentNotification(postId, notificationMessage);
             }
 

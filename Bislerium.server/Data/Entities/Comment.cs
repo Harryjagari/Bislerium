@@ -8,7 +8,7 @@ namespace Bislerium.server.Data.Entities
     public class Comment
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         public string Content { get; set; }
@@ -17,7 +17,7 @@ namespace Bislerium.server.Data.Entities
         public string AuthorId { get; set; }
 
         [Required]
-        public int BlogPostId { get; set; }
+        public Guid BlogPostId { get; set; }
 
         [Required]
         public DateTime CreationDate { get; set; }
@@ -33,6 +33,6 @@ namespace Bislerium.server.Data.Entities
 
         public ICollection<Reaction> Reactions { get; set; }
 
-        public ICollection<Notification> Notifications { get; set; }
+        public ICollection<CommentUpdateHistory> UpdateHistories { get; set; }
     }
 }

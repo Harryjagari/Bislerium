@@ -4,6 +4,6 @@ namespace Bislerium.server.SignalR.Hubs
 {
     public interface ICommentHubClient
     {
-        Task ReceiveCommentNotification(int postId, string message);
+        Task ReceiveCommentNotification(Guid postId, string message);
     }
 }

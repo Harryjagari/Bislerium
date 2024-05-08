@@ -8,7 +8,7 @@ namespace Bislerium.server.Data.Entities
     public class BlogPost
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         public string Title { get; set; }
@@ -35,6 +35,6 @@ namespace Bislerium.server.Data.Entities
 
         public ICollection<Reaction> Reactions { get; set; }
 
-        public ICollection<Notification> Notifications { get; set; }
+        public ICollection<BlogPostUpdateHistory> UpdateHistories { get; set; }
     }
 }

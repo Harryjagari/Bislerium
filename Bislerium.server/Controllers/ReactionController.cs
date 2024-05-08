@@ -25,7 +25,8 @@ namespace Bislerium.server.Controllers
         }
 
         [HttpPost("blogpost/{postId}/react")]
-        public async Task<IActionResult> ReactToBlogPost(int postId, [FromBody] ReactionType reactionType)
+        [Authorize]
+        public async Task<IActionResult> ReactToBlogPost(Guid postId, [FromBody] ReactionType reactionType)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -70,7 +71,8 @@ namespace Bislerium.server.Controllers
         }
 
         [HttpPost("comment/{commentId}/react")]
-        public async Task<IActionResult> ReactToComment(int commentId, [FromBody] ReactionType reactionType)
+        [Authorize(Roles = "Blogger")]
+        public async Task<IActionResult> ReactToComment(Guid commentId, [FromBody] ReactionType reactionType)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -113,7 +115,7 @@ namespace Bislerium.server.Controllers
         }
 
         [HttpGet("blogpost/{postId}/votes")]
-        public async Task<IActionResult> GetBlogPostVotes(int postId)
+        public async Task<IActionResult> GetBlogPostVotes(Guid postId)
         {
             var upvotes = await _context.Reactions.CountAsync(r => r.BlogPostId == postId && r.Type == ReactionType.Upvote);
             var downvotes = await _context.Reactions.CountAsync(r => r.BlogPostId == postId && r.Type == ReactionType.Downvote);
@@ -122,7 +124,7 @@ namespace Bislerium.server.Controllers
         }
 
         [HttpGet("comment/{commentId}/votes")]
-        public async Task<IActionResult> GetCommentVotes(int commentId)
+        public async Task<IActionResult> GetCommentVotes(Guid commentId)
         {
             var upvotes = await _context.Reactions.CountAsync(r => r.CommentId == commentId && r.Type == ReactionType.Upvote);
             var downvotes = await _context.Reactions.CountAsync(r => r.CommentId == commentId && r.Type == ReactionType.Downvote);
@@ -130,7 +132,7 @@ namespace Bislerium.server.Controllers
             return Ok(new { Upvotes = upvotes, Downvotes = downvotes });
         }
 
-        private async Task<string> GetPostAuthorId(int postId)
+        private async Task<string> GetPostAuthorId(Guid postId)
         {
             var post = await _context.BlogPosts.FindAsync(postId);
             return post?.AuthorId;

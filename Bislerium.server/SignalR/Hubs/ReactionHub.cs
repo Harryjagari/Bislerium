@@ -5,7 +5,7 @@ namespace Bislerium.server.SignalR.Hubs
 {
     public class ReactionHub : Hub<IReactionHubClient>
     {
-        public async Task SendReactionNotification(string userId, int postId, string message)
+        public async Task SendReactionNotification(string userId, Guid postId, string message)
         {
             await Clients.User(userId).ReceiveReactionNotification(postId, message);
         }

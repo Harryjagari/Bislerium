@@ -5,15 +5,15 @@ namespace Bislerium.server.Data.Entities
 {
     public class Reaction
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         public ReactionType Type { get; set; }
 
         public string UserId { get; set; }
 
-        public int BlogPostId { get; set; }
+        public Guid ? BlogPostId { get; set; }
 
-        public int CommentId { get; set; }
+        public Guid ? CommentId { get; set; }
 
         public DateTime CreationDate { get; set; }
 

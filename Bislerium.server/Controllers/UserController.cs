@@ -19,8 +19,9 @@ namespace Bislerium.server.Controllers
 
         }
 
-        [Authorize(Roles = "Blogger")] 
+        
         [HttpDelete("{userId}")]
+        [Authorize]
         public async Task<IActionResult> DeleteUser(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -35,8 +36,9 @@ namespace Bislerium.server.Controllers
                 return BadRequest(result.Errors);
         }
 
-        [Authorize(Roles ="Blogger")] 
+        
         [HttpPut("update")]
+        [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateModel profileModel)
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
@@ -44,7 +46,7 @@ namespace Bislerium.server.Controllers
                 return NotFound();
 
             // Update user properties
-            user.FullName = profileModel.FullName;
+            user.UserName = profileModel.FullName;
             user.Address = profileModel.Address;
             user.PhoneNumber = profileModel.PhoneNumber;
             user.DateOfBirth = profileModel.DateOfBirth;
@@ -59,7 +61,7 @@ namespace Bislerium.server.Controllers
 
 
         [HttpGet]
-        [Authorize(Roles ="Blogger")]
+        [Authorize]
         public IActionResult GetAllUsersWithRoles()
         {
             var usersWithRoles = new List<object>();
@@ -84,8 +86,9 @@ namespace Bislerium.server.Controllers
         }
 
 
-        [Authorize(Roles = "Blogger")]
+        //[Authorize(Roles = "Blogger")]
         [HttpPost("upload-profile-picture")]
+        [Authorize]
         public async Task<IActionResult> UploadProfilePicture(IFormFile file)
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);

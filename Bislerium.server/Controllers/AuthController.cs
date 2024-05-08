@@ -48,13 +48,12 @@ namespace Bislerium.server.Controllers
 
             var user = new User
             {
-                UserName = model.Email,
+                UserName = model.FullName,
                 Email = model.Email,
-                FullName = model.FullName,
                 Address = model.Address,
                 PhoneNumber = model.PhoneNumber,
                 DateOfBirth = model.DateOfBirth,
-                RegistrationDate = DateTime.UtcNow // Set registration date to current UTC date/time
+                RegistrationDate = DateTime.UtcNow 
             };
 
             // Create the user
@@ -69,7 +68,7 @@ namespace Bislerium.server.Controllers
             // Encode the token for URL usage
             var encodedToken = UrlEncoder.Default.Encode(token);
             // Construct the confirmation link URL
-            var confirmationLink = Url.Action(nameof(ConfirmEmail), "User", new { token = encodedToken, email = user.Email }, Request.Scheme);
+            var confirmationLink = Url.Action(nameof(ConfirmEmail), "Auth", new { token = encodedToken, email = user.Email }, Request.Scheme);
 
             if (confirmationLink == null)
             {
@@ -112,15 +111,16 @@ namespace Bislerium.server.Controllers
 
 
         [HttpPost("login")]
-        public async Task<ResultWithDataDto<AuthResponseDto>> SigninAsync([FromBody] LoginModel loginModel)
+        public async Task<IActionResult> SigninAsync([FromBody] LoginModel loginModel)
         {
-            var user = await _userManager.FindByNameAsync(loginModel.Email);
+            var user = await _userManager.FindByEmailAsync(loginModel.Email);
             if (user != null && await _userManager.CheckPasswordAsync(user, loginModel.Password))
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                return GenerateAuthResponse(user, roles);
+                var authResponse = GenerateAuthResponse(user, roles);
+                return Ok(authResponse); 
             }
-            return ResultWithDataDto<AuthResponseDto>.Failure("Unauthorized");
+            return BadRequest("Unauthorized"); 
         }
 
 
