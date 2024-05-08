@@ -144,6 +144,12 @@ namespace Bislerium.server.Controllers
                 return NotFound();
             }
 
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (blogPost.AuthorId != userId)
+            {
+                return Forbid();
+            }
+
             if (blogPostUpdateModel.Image != null)
             {
                 // Limit file size to 3 MB
@@ -196,6 +202,12 @@ namespace Bislerium.server.Controllers
             if (blogPost == null)
             {
                 return NotFound();
+            }
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (blogPost.AuthorId != userId)
+            {
+                return Forbid();
             }
 
             if (!string.IsNullOrEmpty(blogPost.ImageUrl))
