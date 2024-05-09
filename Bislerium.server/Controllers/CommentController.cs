@@ -52,7 +52,7 @@ namespace Bislerium.server.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Blogger")]
+        [Authorize]
         public async Task<IActionResult> AddComment(Guid postId, string comment)
         {
             var post = await _context.BlogPosts.FindAsync(postId);
@@ -79,8 +79,8 @@ namespace Bislerium.server.Controllers
             _context.Comments.Add(newComment);
             await _context.SaveChangesAsync();
 
-            var postAuthor = await _userManager.FindByIdAsync(userId);
-
+            // Notify the post author
+            var postAuthor = await _userManager.FindByIdAsync(post.AuthorId);
             if (postAuthor != null)
             {
                 var notificationMessage = $"{postAuthor.UserName} has commented on your post '{post.Title}' at {DateTime.Now}.";
@@ -89,6 +89,7 @@ namespace Bislerium.server.Controllers
 
             return Ok();
         }
+
 
         [HttpPut("{id}")]
         [Authorize]

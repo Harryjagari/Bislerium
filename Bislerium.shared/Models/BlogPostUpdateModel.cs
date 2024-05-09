@@ -5,8 +5,7 @@ namespace Bislerium.shared.Models
 {
     public class BlogPostUpdateModel
     {
-        [Required]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
         public string Title { get; set; }

@@ -53,7 +53,7 @@ namespace Bislerium.server.Controllers
                 Address = model.Address,
                 PhoneNumber = model.PhoneNumber,
                 DateOfBirth = model.DateOfBirth,
-                RegistrationDate = DateTime.UtcNow 
+                RegistrationDate = DateTime.UtcNow
             };
 
             // Create the user
@@ -118,9 +118,9 @@ namespace Bislerium.server.Controllers
             {
                 var roles = await _userManager.GetRolesAsync(user);
                 var authResponse = GenerateAuthResponse(user, roles);
-                return Ok(authResponse); 
+                return Ok(authResponse);
             }
-            return BadRequest("Unauthorized"); 
+            return BadRequest("Unauthorized");
         }
 
 
@@ -133,6 +133,15 @@ namespace Bislerium.server.Controllers
 
             return ResultWithDataDto<AuthResponseDto>.Success(authResponse);
         }
+
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return Ok("User logged out successfully.");
+        }
+
 
     }
 }

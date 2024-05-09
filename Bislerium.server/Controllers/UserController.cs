@@ -3,6 +3,9 @@ using Bislerium.shared.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Bislerium.server.Data;
 
 namespace Bislerium.server.Controllers
 {
@@ -12,31 +15,54 @@ namespace Bislerium.server.Controllers
     {
         private readonly UserManager<User> _userManager;
 
-
-        public UserController(UserManager<User> userManager)
+        private readonly DataContext _context;
+        public UserController(UserManager<User> userManager, DataContext context)
         {
             _userManager = userManager;
-
+            _context = context;
         }
 
-        
-        [HttpDelete("{userId}")]
-        [Authorize]
+        [HttpDelete]
         public async Task<IActionResult> DeleteUser(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
+            {
                 return NotFound();
+            }
 
+            // Retrieve comments associated with the user
+            var userComments = _context.Comments.Where(c => c.AuthorId == userId);
+            // Retrieve blog posts associated with the user
+            var userBlogPosts = _context.BlogPosts.Where(b => b.AuthorId == userId);
+
+            var userReactions = _context.Reactions.Where(b => b.UserId == userId);
+
+
+            // Delete blog posts associated with the user
+            _context.BlogPosts.RemoveRange(userBlogPosts);
+
+            // Delete comments associated with the user
+            _context.Comments.RemoveRange(userComments);
+
+            _context.Reactions.RemoveRange(userReactions);
+
+            // Delete the user
             var result = await _userManager.DeleteAsync(user);
-
             if (result.Succeeded)
+            {
                 return NoContent();
+            }
             else
-                return BadRequest(result.Errors);
+            {
+                // Handle delete failure
+                return StatusCode(500, "Failed to delete user.");
+            }
         }
 
-        
+
+
+
         [HttpPut("update")]
         [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateModel profileModel)

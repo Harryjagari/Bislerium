@@ -1,10 +1,13 @@
 ﻿using Bislerium.server.Data;
 using Bislerium.server.Data.Entities;
+using Bislerium.server.Utilities;
 using Bislerium.shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Bislerium.server.Controllers
 {
@@ -19,20 +22,91 @@ namespace Bislerium.server.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<BlogPost>>> GetBlogPosts()
+        [HttpGet("Blogs")]
+        public IActionResult GetAllBlogs()
         {
-            var blogPosts = await _context.BlogPosts.Select(bp => new BlogPost
+            var options = new JsonSerializerOptions
             {
-                Id = bp.Id,
-                Title = bp.Title,
-                Body = bp.Body,
-                AuthorId = bp.AuthorId,
-                ImageUrl = GetImagePath(bp.ImageUrl)
-            }).ToListAsync();
+                ReferenceHandler = ReferenceHandler.Preserve
+            };
 
-            return Ok(blogPosts);
+            IQueryable<BlogPost> blogsQuery = _context.BlogPosts
+                                                    .Include(b => b.Author)
+                                                    .Include(b => b.Comments)
+                                                        .ThenInclude(c => c.Author)
+                                                    .Include(b => b.Reactions)
+                                                        .ThenInclude(r => r.User);
+
+            var allBlogs = blogsQuery.ToList();
+
+            return Ok(JsonSerializer.Serialize(allBlogs, options));
         }
+
+
+        [HttpGet("catalogue")]
+        public IActionResult GetCatalogue(string sortBy = "recency")
+        {
+            IQueryable<BlogPost> blogsQuery = _context.BlogPosts
+                                                    .Include(b => b.Author); 
+
+            switch (sortBy.ToLower())
+            {
+                case "popularity":
+                    var popularBlogsQuery = _context.BlogPosts
+                                              .Include(b => b.Comments)
+                                              .Include(b => b.Reactions)
+                                              .Include(b => b.Author); 
+
+                    var popularBlogs = popularBlogsQuery.AsEnumerable()
+                                                        .OrderByDescending(b => BlogUtility.CalculatePopularityScore(b))
+                                                        .Select(b => new
+                                                        {
+                                                            b.Id,
+                                                            b.Title,
+                                                            b.Body,
+                                                            b.ImageUrl,
+                                                            b.AuthorId,
+                                                            b.CreationDate,
+                                                            AuthorName = b.Author.UserName, 
+                                                            CommentsCount = b.Comments.Count,
+                                                            ReactionsCount = b.Reactions.Count
+                                                        })
+                                                        .ToList();
+                    return Ok(popularBlogs);
+
+                case "recency":
+                    blogsQuery = blogsQuery.OrderByDescending(b => b.CreationDate);
+                    break;
+                case "random":
+                    blogsQuery = Shuffle(blogsQuery);
+                    break;
+                default:
+                    break;
+            }
+
+            var sortedBlogs = blogsQuery.Select(b => new
+            {
+                b.Id,
+                b.Title,
+                b.Body,
+                b.ImageUrl,
+                b.AuthorId,
+                b.CreationDate,
+                AuthorName = b.Author.UserName, 
+                CommentsCount = b.Comments.Count,
+                ReactionsCount = b.Reactions.Count
+            }).ToList();
+
+            return Ok(sortedBlogs);
+        }
+
+
+
+        private IQueryable<T> Shuffle<T>(IQueryable<T> source)
+        {
+            return source.OrderBy(x => Guid.NewGuid());
+        }
+
 
         private static string GetImagePath(string imagePath)
         {
@@ -130,15 +204,15 @@ namespace Bislerium.server.Controllers
 
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Blogger")]
-        public async Task<IActionResult> PutBlogPost(int id, [FromForm] BlogPostUpdateModel blogPostUpdateModel)
+        [Authorize]
+        public async Task<IActionResult> PutBlogPost(Guid id, [FromForm] BlogPostUpdateModel blogPostUpdateModel)
         {
             if (id != blogPostUpdateModel.Id)
             {
                 return BadRequest();
             }
 
-            var blogPost = _context.BlogPosts.Find(id);
+            var blogPost = await _context.BlogPosts.FindAsync(id);
             if (blogPost == null)
             {
                 return NotFound();
@@ -150,10 +224,25 @@ namespace Bislerium.server.Controllers
                 return Forbid();
             }
 
+            // Create a new entry in the update history
+            var updateHistoryEntry = new BlogPostUpdateHistory
+            {
+                BlogPostId = blogPost.Id,
+                OriginalTitle = blogPost.Title,
+                UpdatedTitle = blogPostUpdateModel.Title,
+                OriginalBody = blogPost.Body,
+                UpdatedBody = blogPostUpdateModel.Body,
+                OriginalImageUrl = blogPost.ImageUrl, // Store the current image URL as OriginalImageUrl
+                UpdatedImageUrl = null,
+                Timestamp = DateTime.Now
+            };
+
+            _context.BlogPostUpdateHistories.Add(updateHistoryEntry);
+
             if (blogPostUpdateModel.Image != null)
             {
                 // Limit file size to 3 MB
-                const int maxFileSizeInBytes = 3 * 1024 * 1024; 
+                const int maxFileSizeInBytes = 3 * 1024 * 1024;
 
                 if (blogPostUpdateModel.Image.Length > maxFileSizeInBytes)
                 {
@@ -163,39 +252,50 @@ namespace Bislerium.server.Controllers
 
                 string uniqueFileName = $"{Guid.NewGuid()}_{blogPostUpdateModel.Image.FileName}";
 
-                string relativeFilePath = Path.Combine("images", uniqueFileName);
+                string uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Images");
 
-                string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativeFilePath);
+                string newFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "blogPost-History");
+
+                // Check if the directory exists, if not create it
+                if (!Directory.Exists(newFolder))
+                {
+                    Directory.CreateDirectory(newFolder);
+                }
+
+                string filePath = Path.Combine(uploadFolder, uniqueFileName);
+                string newFilePath = Path.Combine(newFolder, uniqueFileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await blogPostUpdateModel.Image.CopyToAsync(stream);
                 }
 
-                if (!string.IsNullOrEmpty(blogPost.ImageUrl))
-                {
-                    string oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", blogPost.ImageUrl.TrimStart('/'));
-                    if (System.IO.File.Exists(oldFilePath))
-                    {
-                        System.IO.File.Delete(oldFilePath);
-                    }
-                }
+                // Move the image file to the new folder
+                System.IO.File.Move(filePath, newFilePath);
 
-                blogPost.ImageUrl = relativeFilePath;
+                // Update the UpdatedImageUrl with the new image file name
+                updateHistoryEntry.UpdatedImageUrl = uniqueFileName;
+
+                // Update the blog post's image URL
+                blogPost.ImageUrl = uniqueFileName;
             }
 
+            // Update the blog post's title and body
             blogPost.Title = blogPostUpdateModel.Title;
             blogPost.Body = blogPostUpdateModel.Body;
 
-            _context.Entry(blogPost).State = EntityState.Modified;
-            _context.SaveChanges();
+            // Save changes to the database
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
 
+
+
+
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin, Blogger")]
+        [Authorize]
         public IActionResult DeleteBlogPost(Guid id)
         {
             var blogPost = _context.BlogPosts.Find(id);

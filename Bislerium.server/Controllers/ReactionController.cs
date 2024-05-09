@@ -61,17 +61,18 @@ namespace Bislerium.server.Controllers
             var postAuthorId = await GetPostAuthorId(postId);
 
             var post = await _context.BlogPosts.FindAsync(postId);
-            if (post == null)
+            if (post != null)
             {
-                var notificationMessage = $"{User.Identity.Name} has reacted to your post '{postId}' with '{reactionType}' at {DateTime.Now}.";
+                var notificationMessage = $"{User.Identity.Name} has reacted to your post '{post.Title}' with '{reactionType}' at {DateTime.Now}.";
                 await _reactionHubContext.Clients.User(post.AuthorId).ReceiveReactionNotification(postId, notificationMessage);
             }
 
             return Ok();
         }
 
+
         [HttpPost("comment/{commentId}/react")]
-        [Authorize(Roles = "Blogger")]
+        [Authorize]
         public async Task<IActionResult> ReactToComment(Guid commentId, [FromBody] ReactionType reactionType)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -107,12 +108,13 @@ namespace Bislerium.server.Controllers
             var comment = await _context.Comments.FindAsync(commentId);
             if (comment != null)
             {
-                var notificationMessage = $"{User.Identity.Name} has reacted to your comment '{commentId}' with '{reactionType}' at {DateTime.Now}.";
+                var notificationMessage = $"{User.Identity.Name} has reacted to your comment '{comment.Content}' with '{reactionType}' at {DateTime.Now}.";
                 await _reactionHubContext.Clients.User(comment.AuthorId).ReceiveReactionNotification(commentId, notificationMessage);
             }
 
             return Ok();
         }
+
 
         [HttpGet("blogpost/{postId}/votes")]
         public async Task<IActionResult> GetBlogPostVotes(Guid postId)

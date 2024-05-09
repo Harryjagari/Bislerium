@@ -111,20 +111,6 @@ namespace Bislerium.server.Controllers
                        new Response { Status = "Error", Message = "This User Doesnot exist!" });
         }
 
-
-        [HttpPost("login")]
-        public async Task<ResultWithDataDto<AuthResponseDto>> AdminSigninAsync([FromBody] LoginModel loginModel)
-        {
-            var user = await _userManager.FindByNameAsync(loginModel.Email);
-            if (user != null && await _userManager.CheckPasswordAsync(user, loginModel.Password))
-            {
-                var roles = await _userManager.GetRolesAsync(user);
-                return GenerateAuthResponse(user, roles);
-            }
-            return ResultWithDataDto<AuthResponseDto>.Failure("Unauthorized");
-        }
-
-
         [Authorize]
         [HttpDelete("{userId}")]
         public async Task<IActionResult> DeleteAdmin(string userId)
