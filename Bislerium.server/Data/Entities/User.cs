@@ -7,6 +7,8 @@ namespace Bislerium.server.Data.Entities
 {
     public class User : IdentityUser
     {
+        // Remove unique constraint on UserName
+        public override string UserName { get; set; }
         public string Address { get; set; }
 
         public DateTime DateOfBirth { get; set; }

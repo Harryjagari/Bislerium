@@ -108,22 +108,32 @@ namespace Bislerium.server.Controllers
                 return Forbid();
             }
 
-            var postId = comment.BlogPostId;
-            var post = await _context.BlogPosts.FindAsync(postId);
+            // Create a new entry in the update history
+            var updateHistoryEntry = new CommentUpdateHistory
+            {
+                CommentId = comment.Id,
+                OriginalContent = comment.Content,
+                UpdatedContent = updatedComment,
+                Timestamp = DateTime.Now
+            };
+
+            _context.CommentUpdateHistories.Add(updateHistoryEntry);
 
             comment.Content = updatedComment;
             await _context.SaveChangesAsync();
 
+            var post = await _context.BlogPosts.FindAsync(comment.BlogPostId);
             var postAuthor = await _userManager.FindByIdAsync(userId);
 
             if (postAuthor != null)
             {
                 var notificationMessage = $"{postAuthor.UserName} has updated their comment on your post at {DateTime.Now}.";
-                await _commentHubContext.Clients.User(comment.BlogPost.AuthorId).ReceiveCommentNotification(postId, notificationMessage);
+                await _commentHubContext.Clients.User(comment.BlogPost.AuthorId).ReceiveCommentNotification(comment.BlogPostId, notificationMessage);
             }
 
             return Ok();
         }
+
 
         [HttpDelete("{id}")]
         [Authorize]

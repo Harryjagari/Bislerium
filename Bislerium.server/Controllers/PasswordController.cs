@@ -63,14 +63,15 @@ namespace Bislerium.server.Controllers
             var otp = GenerateOTP();
 
             user.ResetPasswordOTP = otp;
-            user.ResetPasswordOTPIssueTime = DateTime.UtcNow;
+            user.ResetPasswordOTPIssueTime = DateTime.Now;
             await _userManager.UpdateAsync(user);
             var message = new Message(new string[] { user.Email }, "Password Reset OTP", $"Your OTP to reset the password is: {otp}");
 
-             _emailService.SendEmail(message);
+            _emailService.SendEmail(message);
 
             return Ok("If the email exists in our system, we have sent a password reset OTP to it.");
         }
+
 
         [HttpPost("reset-passwordWithOTP")]
         public async Task<IActionResult> ResetPasswordAsync(ResetPasswordWithOTPDto dto)
@@ -82,9 +83,14 @@ namespace Bislerium.server.Controllers
                 return BadRequest("Invalid request");
             }
 
-            if (user.ResetPasswordOTPIssueTime != null && user.ResetPasswordOTP == dto.OTP && user.ResetPasswordOTPIssueTime.Value.AddMinutes(15) >= DateTime.UtcNow)
+            // Validate OTP and expiration time
+            if (IsOTPValid(user, dto.OTP))
             {
-                var result = await _userManager.ResetPasswordAsync(user, dto.OTP, dto.NewPassword);
+                // Generate a password reset token
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                // Reset password using the token and new password
+                var result = await _userManager.ResetPasswordAsync(user, token, dto.NewPassword);
 
                 if (result.Succeeded)
                 {
@@ -93,9 +99,31 @@ namespace Bislerium.server.Controllers
                     await _userManager.UpdateAsync(user);
                     return Ok("Password reset successfully");
                 }
+                else
+                {
+                    // Log the errors returned by ResetPasswordAsync
+                    foreach (var error in result.Errors)
+                    {
+                        // Log or handle the error appropriately
+                        Console.WriteLine($"Error resetting password: {error.Description}");
+                    }
+
+                    return BadRequest("Failed to reset password");
+                }
             }
 
             return BadRequest("Invalid OTP or OTP has expired");
+        }
+
+        private bool IsOTPValid(User user, string otp)
+        {
+            if (user.ResetPasswordOTPIssueTime.HasValue &&
+                user.ResetPasswordOTP == otp &&
+                user.ResetPasswordOTPIssueTime.Value.AddMinutes(15) >= DateTime.Now)
+            {
+                return true;
+            }
+            return false;
         }
 
         private string GenerateOTP()

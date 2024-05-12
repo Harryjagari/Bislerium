@@ -1,6 +1,7 @@
 using Bislerium.server.Data;
 using Bislerium.server.Data.Entities;
 using Bislerium.server.Services;
+using Bislerium.server.SignalR.Hubs;
 using Bislerium.shared.Models;
 using Bislerium.shared.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -33,6 +34,8 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.ClaimsIdentity.UserIdClaimType = "uid";
     options.ClaimsIdentity.RoleClaimType = "role";
     options.User.RequireUniqueEmail = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
+
 });
 
 builder.Services.AddAuthentication(Options =>
@@ -83,6 +86,8 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityRequirement(securityRequirement);
 });
 
+
+
 // Add SignalR
 builder.Services.AddSignalR();
 
@@ -113,6 +118,9 @@ app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<ReactionHub>("/reaction");
+app.MapHub<CommentHub>("/comment");
 
 app.MapControllers();
 

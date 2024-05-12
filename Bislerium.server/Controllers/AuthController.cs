@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Encodings.Web;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Data;
 
 namespace Bislerium.server.Controllers
 {
@@ -21,14 +24,17 @@ namespace Bislerium.server.Controllers
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
         private readonly TokenService _tokenService;
+        private readonly DataContext _context;
 
-        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, IEmailService emailService, IConfiguration configuration, TokenService tokenService)
+        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, IEmailService emailService, IConfiguration configuration, TokenService tokenService, DataContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _emailService = emailService;
             _tokenService = tokenService;
+            _context = context;
+
         }
 
         [HttpPost("register")]
@@ -62,6 +68,8 @@ namespace Bislerium.server.Controllers
             {
                 return BadRequest(result.Errors);
             }
+            // Assign role to the user
+            await _userManager.AddToRoleAsync(user, "Blogger");
 
             // Generate the email confirmation token
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -75,10 +83,6 @@ namespace Bislerium.server.Controllers
                 // Log or handle the error
                 return BadRequest("Failed to generate confirmation link");
             }
-
-
-            // Assign role to the user
-            await _userManager.AddToRoleAsync(user, "Blogger");
 
             // Create the email message
             var message = new Message(new string[] { user.Email }, "Confirmation email link", confirmationLink);
@@ -114,25 +118,44 @@ namespace Bislerium.server.Controllers
         public async Task<IActionResult> SigninAsync([FromBody] LoginModel loginModel)
         {
             var user = await _userManager.FindByEmailAsync(loginModel.Email);
+
+
             if (user != null && await _userManager.CheckPasswordAsync(user, loginModel.Password))
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                var authResponse = GenerateAuthResponse(user, roles);
-                return Ok(authResponse);
+
+                var authResponseResult = await GenerateAuthResponse(user);
+
+                if (authResponseResult.IsSuccess)
+                {
+                    return Ok(authResponseResult.Data);
+                }
+                else
+                {
+                    return BadRequest(authResponseResult.ErrorMessage);
+                }
             }
+
             return BadRequest("Unauthorized");
         }
 
-
-        private ResultWithDataDto<AuthResponseDto> GenerateAuthResponse(User user, IEnumerable<string> roles)
+        private async Task<ResultWithDataDto<AuthResponseDto>> GenerateAuthResponse(User user)
         {
             var loggedInUser = new LoggedInUser(user.Id, user.UserName, user.Email, user.Address);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            if (roles == null || roles.Count == 0)
+            {
+                return ResultWithDataDto<AuthResponseDto>.Failure("No roles found for the user.");
+            }
+
             var token = _tokenService.GenerateJwt(loggedInUser, roles);
 
-            var authResponse = new AuthResponseDto(loggedInUser, token);
+            var authResponse = new AuthResponseDto(loggedInUser, token, roles);
 
             return ResultWithDataDto<AuthResponseDto>.Success(authResponse);
         }
+
 
 
         [HttpPost("logout")]
@@ -141,7 +164,5 @@ namespace Bislerium.server.Controllers
             await _signInManager.SignOutAsync();
             return Ok("User logged out successfully.");
         }
-
-
     }
 }

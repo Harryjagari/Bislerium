@@ -17,7 +17,6 @@ namespace Bislerium.server.Controllers
     [ApiController]
     public class AdminController : ControllerBase
     {
-
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -33,8 +32,8 @@ namespace Bislerium.server.Controllers
             _emailService = emailService;
             _tokenService = tokenService;
         }
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterModel model)
+        [HttpPost("Add-Admin")]
+        public async Task<IActionResult> AddAdmin([FromBody] RegisterModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -45,7 +44,7 @@ namespace Bislerium.server.Controllers
             var existingUser = await _userManager.FindByEmailAsync(model.Email);
             if (existingUser != null)
             {
-                return BadRequest("A admin with this email already exists.");
+                return BadRequest("A user with this email already exists.");
             }
 
             var user = new User
@@ -55,7 +54,7 @@ namespace Bislerium.server.Controllers
                 Address = model.Address,
                 PhoneNumber = model.PhoneNumber,
                 DateOfBirth = model.DateOfBirth,
-                RegistrationDate = DateTime.UtcNow 
+                RegistrationDate = DateTime.UtcNow
             };
 
             // Create the user
@@ -64,13 +63,15 @@ namespace Bislerium.server.Controllers
             {
                 return BadRequest(result.Errors);
             }
+            // Assign role to the user
+            await _userManager.AddToRoleAsync(user, "Admin");
 
             // Generate the email confirmation token
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             // Encode the token for URL usage
             var encodedToken = UrlEncoder.Default.Encode(token);
             // Construct the confirmation link URL
-            var confirmationLink = Url.Action(nameof(ConfirmEmail), "User", new { token = encodedToken, email = user.Email }, Request.Scheme);
+            var confirmationLink = Url.Action(nameof(ConfirmEmail), "Admin", new { token = encodedToken, email = user.Email }, Request.Scheme);
 
             if (confirmationLink == null)
             {
@@ -78,17 +79,13 @@ namespace Bislerium.server.Controllers
                 return BadRequest("Failed to generate confirmation link");
             }
 
-
-            // Assign role to the user
-            await _userManager.AddToRoleAsync(user, "Admin");
-
             // Create the email message
             var message = new Message(new string[] { user.Email }, "Confirmation email link", confirmationLink);
 
             // Send email confirmation email
             _emailService.SendEmail(message);
 
-            return Ok("Admin registered successfully. Please check your email for the confirmation link.");
+            return Ok("User registered successfully. Please check your email for the confirmation link.");
         }
 
 
@@ -149,12 +146,12 @@ namespace Bislerium.server.Controllers
                 return BadRequest(result.Errors);
         }
 
-        private ResultWithDataDto<AuthResponseDto> GenerateAuthResponse(User user, IEnumerable<string> roles)
+        private ResultWithDataDto<AuthResponseDto> GenerateAuthResponse(User user, List<string> roles)
         {
             var loggedInUser = new LoggedInUser(user.Id, user.UserName, user.Email, user.Address);
             var token = _tokenService.GenerateJwt(loggedInUser, roles);
 
-            var authResponse = new AuthResponseDto(loggedInUser, token);
+            var authResponse = new AuthResponseDto(loggedInUser, token,roles);
 
             return ResultWithDataDto<AuthResponseDto>.Success(authResponse);
         }

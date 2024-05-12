@@ -23,7 +23,7 @@ namespace Bislerium.server.Services
                 IssuerSigningKey = GetSecurityKey(configuration),
             };
 
-        public string GenerateJwt(LoggedInUser user, IEnumerable<string> roles)
+        public string GenerateJwt(LoggedInUser user, IList<string> roles)
         {
             var securityKey = GetSecurityKey(_configuration);
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -35,13 +35,15 @@ namespace Bislerium.server.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.StreetAddress, user.Address)
+                new Claim(ClaimTypes.StreetAddress, user.Address),
             };
 
             foreach (var role in roles)
             {
-                claims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim("Role", role));
             }
+
+
 
             var token = new JwtSecurityToken(
                 issuer: issuer,
